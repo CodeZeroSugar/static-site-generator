@@ -29,3 +29,24 @@ class TestParentNode(unittest.TestCase):
             parent_node.to_html(),
             '<p><b>bold child</b><i>italics child</i><a href="https://www.linkchild.com">link child</a></p>',
         )
+
+    def test_to_html_no_children(self):
+        parent_node = ParentNode("div", [])
+        with self.assertRaises(ValueError):
+            parent_node.to_html()
+
+    def test_repr(self):
+        node = ParentNode(
+            "p",
+            LeafNode("b", "child"),
+            {"class": "primary"},
+        )
+
+        self.assertEqual(
+            node.__repr__(),
+            "ParentNode(p, children: LeafNode(b, child, None), {'class': 'primary'})",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

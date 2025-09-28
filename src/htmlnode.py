@@ -37,6 +37,9 @@ class LeafNode(HTMLNode):
             return self.value
         return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
 
+    def __repr__(self):
+        return f"LeafNode({self.tag}, {self.value}, {self.props})"
+
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):
@@ -52,8 +55,11 @@ class ParentNode(HTMLNode):
 
         html_concat_child = f"<{self.tag}{self.props_to_html()}>"
         for child in self.children:
-            html_concat_child = html_concat_child + child.to_html()
+            html_concat_child += child.to_html()
 
-        html_concat_child = html_concat_child + f"</{self.tag}>"
+        html_concat_child += f"</{self.tag}>"
 
         return html_concat_child
+
+    def __repr__(self):
+        return f"ParentNode({self.tag}, children: {self.children}, {self.props})"

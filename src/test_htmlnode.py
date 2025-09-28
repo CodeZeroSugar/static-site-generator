@@ -52,3 +52,7 @@ class TestHTMLNode(unittest.TestCase):
             node.__repr__(),
             "HTMLNode(p, What a strange world, children: None, {'class': 'primary'})",
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
