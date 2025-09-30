@@ -45,15 +45,20 @@ def split_nodes_image(old_nodes):
             new_nodes.append(node)
             continue
 
-        i = 0
-        while i < len(matches):
-            sections = node_text.split(f"![{matches[i][0]}]({matches[i][1]})", 1)
+        for match in matches:
+            sections = node_text.split(f"![{match[0]}]({match[1]})", 1)
+            if len(sections) != 2:
+                raise ValueError("invalid markdown, image section not closed")
             if sections[0] != "":
                 new_nodes.append(TextNode(sections[0], TextType.TEXT))
-            new_nodes.append(TextNode(matches[i][0], TextType.IMAGE, matches[i][1]))
+            new_nodes.append(
+                TextNode(
+                    match[0],
+                    TextType.IMAGE,
+                    match[1],
+                )
+            )
             node_text = sections[1]
-            i += 1
-
         if node_text != "":
             new_nodes.append(TextNode(node_text, TextType.TEXT))
 
@@ -77,16 +82,37 @@ def split_nodes_link(old_nodes):
             new_nodes.append(node)
             continue
 
-        i = 0
-        while i < len(matches):
-            sections = node_text.split(f"[{matches[i][0]}]({matches[i][1]})", 1)
+        for match in matches:
+            sections = node_text.split(f"[{match[0]}]({match[1]})", 1)
+            if len(sections) != 2:
+                raise ValueError("invalid markdown, image section not closed")
             if sections[0] != "":
                 new_nodes.append(TextNode(sections[0], TextType.TEXT))
-            new_nodes.append(TextNode(matches[i][0], TextType.LINK, matches[i][1]))
+            new_nodes.append(
+                TextNode(
+                    match[0],
+                    TextType.LINK,
+                    match[1],
+                )
+            )
             node_text = sections[1]
-            i += 1
 
         if node_text != "":
             new_nodes.append(TextNode(node_text, TextType.TEXT))
 
     return new_nodes
+
+
+def text_to_textnodes(text):
+    current_nodes = [
+        TextNode(
+            text,
+            TextType.TEXT,
+        )
+    ]
+    current_nodes = split_nodes_delimiter(current_nodes, "`", TextType.CODE)
+    current_nodes = split_nodes_delimiter(current_nodes, "**", TextType.BOLD)
+    current_nodes = split_nodes_delimiter(current_nodes, "_", TextType.ITALIC)
+    current_nodes = split_nodes_link(current_nodes)
+    current_nodes = split_nodes_image(current_nodes)
+    return current_nodes
