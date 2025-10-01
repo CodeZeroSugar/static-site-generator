@@ -10,6 +10,7 @@ from split_nodes import (
 )
 from extract_markdown import extract_markdown_images, extract_markdown_links
 from markdown_to_blocks import markdown_to_blocks
+from block_type import BlockType, block_to_block_type
 
 
 class TestTextNode(unittest.TestCase):
@@ -301,6 +302,71 @@ This is the same paragraph on a new line
                 "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
                 "- This is a list\n- with items",
             ],
+        )
+
+    def test_block_to_heading(self):
+        lines = """###### #This is the heading line.
+            Here is some more random text below the heading.
+            This text is also below the heading."""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.HEADING,
+        )
+
+    def test_block_to_code(self):
+        lines = """```.py
+            this is some pretend code.
+            Here is some more random code text.
+            This text is also random code text.
+            ```"""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.CODE,
+        )
+
+    def test_block_to_quote(self):
+        lines = """>this is a quote.
+            > this is another quote
+            >this is another nother quote.
+            > this is the last quote line"""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.QUOTE,
+        )
+
+    def test_block_to_unordered(self):
+        lines = """- this list is not ordered.
+            - this list is unordered 
+            - this is a list that is unordered.
+            - this is the last list line"""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.UNORDERED_LIST,
+        )
+
+    def test_block_to_ordered(self):
+        lines = """1. this list is ordered.
+            2. this list is ordered 
+            3. this is a list that is ordered.
+            4. this is the last list line"""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.ORDERED_LIST,
+        )
+
+    def test_block_to_paragraph(self):
+        lines = """This is the paragraph block.
+            Here is some more random text in a paragraph.
+            This text is also in the paragraph."""
+        result = block_to_block_type(lines)
+        self.assertEqual(
+            result,
+            BlockType.PARAGRAPH,
         )
 
 
