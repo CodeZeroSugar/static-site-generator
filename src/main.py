@@ -1,12 +1,18 @@
-from textnode import TextNode, TextType
+from copy_static import clear_destination, copy_static
+import os
 
 
 def main():
-    text_node = TextNode(
-        "This is some anchor text", TextType.LINK, "https://www.boot.dev"
+    source_dir = os.path.expanduser(
+        "~/workspace/github.com/CodeZeroSugar/static-site-generator/static/"
     )
-    representation = repr(text_node)
-    print(representation)
+    destination_dir = os.path.expanduser(
+        "~/workspace/github.com/CodeZeroSugar/static-site-generator/public/"
+    )
+
+    clear_destination(destination_dir)
+
+    copy_static(source_dir, destination_dir)
 
 
 main()

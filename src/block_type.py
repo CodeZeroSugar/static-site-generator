@@ -12,39 +12,42 @@ class BlockType(Enum):
 
 def is_heading(line):
     i = 0
-    char = line[0]
-    while char == "#":
+    while i < len(line) and i < 6 and line[i] == "#":
         i += 1
-        char = line[i]
-    if char == " " and 1 <= i <= 6:
-        return True
-    return False
+    return i > 0 and (i < len(line))
 
 
 def block_to_block_type(block):
     lines = block.split("\n")
+    start = 0
+    while start < len(lines) and not lines[start].strip():
+        start += 1
+    end = len(lines) - 1
+    while end >= 0 and not lines[end].strip():
+        end -= 1
+
     if (
-        lines[0].lstrip().startswith("```")
-        and lines[-1].lstrip().startswith("```")
-        and len(lines) >= 3
+        end - start >= 2
+        and lines[start].strip().startswith("```")
+        and lines[end].strip().startswith("```")
     ):
         return BlockType.CODE
 
     if is_heading(lines[0]):
         return BlockType.HEADING
 
-    if all(line.lstrip().startswith(">") for line in lines):
+    lines_norm = [ln for ln in lines if ln.strip()]
+    if lines_norm and all(ln.lstrip().startswith(">") for ln in lines_norm):
         return BlockType.QUOTE
 
-    if all(line.lstrip().startswith("- ") for line in lines):
+    if lines_norm and all(ln.lstrip().startswith("-") for ln in lines_norm):
         return BlockType.UNORDERED_LIST
 
-    order_test = True
-    for index, line in enumerate(lines, start=1):
-        if not line.lstrip().startswith(f"{index}. "):
-            order_test = False
-            break
-    if order_test:
+    nonempty = [ln for ln in lines if ln.strip()]
+    if nonempty and all(
+        ln.lstrip().split(".", 1)[0].isdigit()
+        and ln.lstrip().startswith(f"{ln.lstrip().split('.', 1)[0]}. ")
+        for ln in nonempty
+    ):
         return BlockType.ORDERED_LIST
-
     return BlockType.PARAGRAPH

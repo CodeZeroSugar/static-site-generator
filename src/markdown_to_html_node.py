@@ -16,6 +16,20 @@ def heading_level(text):
     return i
 
 
+def check_for_int(text):
+    i = 0
+    while i < len(text) and text[i].isdigit():
+        i += 1
+    return i
+
+
+def stip_order_prefix(line):
+    i = check_for_int(line)
+    if i > 0 and i + 1 < len(line) and line[i] == "." and line[i + 1] == " ":
+        return line[i + 2 :]
+    return line
+
+
 def markdown_to_html_node(markdown):
     block_list = markdown_to_blocks(markdown)
     children_nodes = []
@@ -23,8 +37,9 @@ def markdown_to_html_node(markdown):
         current_block_type = block_to_block_type(block)
         match current_block_type:
             case BlockType.PARAGRAPH:
-                clean_block = block.strip()
-                children = text_to_children(clean_block)
+                lines = [ln.strip() for ln in block.split("\n") if ln.strip()]
+                clean = " ".join(lines)
+                children = text_to_children(clean)
                 p_node = ParentNode("p", children)
                 children_nodes.append(p_node)
 
@@ -37,23 +52,42 @@ def markdown_to_html_node(markdown):
                 children_nodes.append(node)
 
             case BlockType.CODE:
-                block_lines = block.split("\n")
-                remove_ticks = block_lines[1:-1]
-                clean_block = "\n".join(remove_ticks) + "\n"
-                node = ParentNode("pre", [LeafNode("code", clean_block)])
-                children_nodes.append(node)
+                lines = block.split("\n")
+                start = 0
+                while start < len(lines) and not lines[start].strip():
+                    start += 1
+                end = len(lines) - 1
+                while end >= 0 and not lines[end].strip():
+                    end -= 1
+                inner = lines[start + 1 : end]
+
+                while inner and not inner[0].strip():
+                    inner.pop(0)
+                while inner and not inner[-1].strip():
+                    inner.pop()
+
+                indents = [len(l) - len(l.lstrip(" ")) for l in inner if l.strip()]
+                common = min(indents) if indents else 0
+                dedented = [(l[common:] if l.strip() else "") for l in inner]
+
+                clean = "\n".join(dedented)
+                if clean and not clean.endswith("\n"):
+                    clean += "\n"
+
+                children_nodes.append(ParentNode("pre", [LeafNode("code", clean)]))
 
             case BlockType.QUOTE:
                 quote_lines = block.split("\n")
                 clean_lines = []
                 for line in quote_lines:
-                    if line.startswith("> "):
-                        clean_lines.append(line[2:])
-                    elif line.startswith(">"):
-                        clean_lines.append(line[1:])
+                    s = line.lstrip()
+                    if s.startswith("> "):
+                        clean_lines.append(s[2:])
+                    elif s.startswith(">"):
+                        clean_lines.append(s[1:])
                     else:
-                        clean_lines.append(line)
-                clean_block = "\n".join(clean_lines)
+                        clean_lines.append(s)
+                clean_block = "\n".join(clean_lines).strip()
                 children = text_to_children(clean_block)
                 node = ParentNode("blockquote", children)
                 children_nodes.append(node)
@@ -63,8 +97,8 @@ def markdown_to_html_node(markdown):
                 for line in block.split("\n"):
                     if not line.strip():
                         continue
-                    if line.startswith(("- ", "* ")):
-                        item = line[2:]
+                    if line.lstrip().startswith(("- ", "* ")):
+                        item = line.lstrip()[2:]
                     else:
                         item = line
                     children = text_to_children(item)
@@ -75,7 +109,15 @@ def markdown_to_html_node(markdown):
                 children_nodes.append(node)
 
             case BlockType.ORDERED_LIST:
-                pass
+                li_nodes = []
+                for line in block.split("\n"):
+                    if not line.strip():
+                        continue
+                    item = stip_order_prefix(line.lstrip())
+                    li_nodes.append(ParentNode("li", text_to_children(item)))
+
+                node = ParentNode("ol", li_nodes)
+                children_nodes.append(node)
 
     return (
         ParentNode("div", children_nodes)

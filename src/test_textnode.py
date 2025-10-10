@@ -11,6 +11,7 @@ from split_nodes import (
 from extract_markdown import extract_markdown_images, extract_markdown_links
 from markdown_to_blocks import markdown_to_blocks
 from block_type import BlockType, block_to_block_type
+from markdown_to_html_node import markdown_to_html_node
 
 
 class TestTextNode(unittest.TestCase):
@@ -315,11 +316,13 @@ This is the same paragraph on a new line
         )
 
     def test_block_to_code(self):
-        lines = """```.py
-            this is some pretend code.
-            Here is some more random code text.
-            This text is also random code text.
-            ```"""
+        lines = """
+        ```.py
+        this is some pretend code.
+        Here is some more random code text.
+        This text is also random code text.
+        ```
+        """
         result = block_to_block_type(lines)
         self.assertEqual(
             result,
@@ -367,6 +370,102 @@ This is the same paragraph on a new line
         self.assertEqual(
             result,
             BlockType.PARAGRAPH,
+        )
+
+    def test_paragraphs(self):
+        md = """
+    This is **bolded** paragraph
+    text in a p
+    tag here
+
+    This is another paragraph with _italic_ text and `code` here
+
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+
+    def test_codeblock(self):
+        md = """
+    ```
+    This is text that _should_ remain
+    the **same** even with inline stuff
+    ```
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+        )
+
+    def test_heading_h3_inline(self):
+        md = "### Hello, **world**"
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            "<div><h3>Hello, <b>world</b></h3></div>",
+        )
+
+    def test_heading_h3_inline_no_space(self):
+        md = "###Hello, **world**"
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            "<div><h3>Hello, <b>world</b></h3></div>",
+        )
+
+    def test_paragraphs_multi_line(self):
+        md = """
+        This is a **bold** paragraph with some _italic_ text and a [link to Google](https://www.google.com). It also includes 
+        some `inline code` for emphasis.
+        """
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            '<div><p>This is a <b>bold</b> paragraph with some <i>italic</i> text and a <a href="https://www.google.com">link to Google</a>. It also includes some <code>inline code</code> for emphasis.</p></div>',
+        )
+
+    def test_blockquotes(self):
+        md = """
+            > This is an important quote from a wise person.
+            > It spans multiple lines to emphasize its significance.
+            """
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            "<div><blockquote>This is an important quote from a wise person.\nIt spans multiple lines to emphasize its significance.</blockquote></div>",
+        )
+
+    def test_unordered_list(self):
+        md = """
+            - Item 1
+            - Item 2
+            - Item 3
+        """
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            "<div><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul></div>",
+        )
+
+    def test_ordered_list(self):
+        md = """
+            1. This
+            2. is
+            3. an
+            4. ordered
+            5. list
+        """
+        node = markdown_to_html_node(md)
+        self.assertEqual(
+            node.to_html(),
+            "<div><ol><li>This</li><li>is</li><li>an</li><li>ordered</li><li>list</li></ol></div>",
         )
 
 
