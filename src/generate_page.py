@@ -3,7 +3,7 @@ from extract_title import extract_title
 from markdown_to_html_node import markdown_to_html_node
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath=None):
     if not os.path.exists(dest_path):
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
@@ -22,5 +22,7 @@ def generate_page(from_path, template_path, dest_path):
 
         replace_title = read_template.replace("{{ Title }}", title)
         replace_content = replace_title.replace("{{ Content }}", html_string)
+        replace_href = replace_content.replace('href="/', f'href="{basepath}')
+        final_html = replace_href.replace('src="/', f'src="{basepath}')
 
-        new_file.write(replace_content)
+        new_file.write(final_html)
