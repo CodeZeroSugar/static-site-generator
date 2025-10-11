@@ -12,6 +12,7 @@ from extract_markdown import extract_markdown_images, extract_markdown_links
 from markdown_to_blocks import markdown_to_blocks
 from block_type import BlockType, block_to_block_type
 from markdown_to_html_node import markdown_to_html_node
+from extract_title import extract_title
 
 
 class TestTextNode(unittest.TestCase):
@@ -467,6 +468,42 @@ This is the same paragraph on a new line
             node.to_html(),
             "<div><ol><li>This</li><li>is</li><li>an</li><li>ordered</li><li>list</li></ol></div>",
         )
+
+    def test_extract_title1(self):
+        md = "# heading"
+        result = extract_title(md)
+        self.assertEqual(
+            result,
+            "heading",
+        )
+
+    def test_extract_title2(self):
+        md = "#this should be an error"
+        with self.assertRaises(Exception):
+            extract_title(md)
+
+    def test_extract_title3(self):
+        md = """
+            ### this line is a heading but not the right one
+            - this line is not a heading
+            # pick me!
+            `not the right one`
+            """
+        result = extract_title(md)
+        self.assertEqual(
+            result,
+            "pick me!",
+        )
+
+    def test_extract_title4(self):
+        md = """
+            ## there is no correct heading
+            - Hello
+            1. hello 
+            hello 
+            """
+        with self.assertRaises(Exception):
+            extract_title(md)
 
 
 if __name__ == "__main__":
